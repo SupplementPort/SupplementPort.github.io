@@ -1,4 +1,3 @@
-
 function dispatch_messages(messageArray) {
     messageArray.forEach((msg, index) => {
         setTimeout(() => {
@@ -8,14 +7,55 @@ function dispatch_messages(messageArray) {
             aiDiv.textContent = msg;
             chatBox.appendChild(aiDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
-        }, index * 100); 
+        }, index * 500); // Increased delay slightly for better readability
     });
 }
 
 function generate_response(x) {
-    let check = 0
+    let check = 0;
     const inp = String(x).toLowerCase();
-    
+
+    // --- DICTIONARIES FOR WEIGHTED ALGORITHM ---
+
+    // A: Common Symptoms
+    const symptoms = ["fatigue", "pain", "headache", "cramp", "stomachache"];
+
+    // B: Nutrient-rich foods (Top 5 per nutrient)
+    const nutrientFoods = {
+        "Iron": ["Spinach", "Beef Steak", "Tofu", "Lentils", "Quinoa"],
+        "Vitamin B9": ["Asparagus", "Broccoli", "Avocado", "Brussels Sprouts", "Lettuce"],
+        "Magnesium": ["Dark Chocolate", "Almonds", "Black Beans", "Pumpkin Seeds", "Yogurt"],
+        "Vitamin D": ["Salmon", "Egg", "Milk", "Mushrooms", "Sardines"],
+        "Calcium": ["Milk", "Cheese", "Tofu", "Chia Seeds", "Kale"],
+        "Potassium": ["Banana", "Sweet Potato", "Spinach", "Coconut Water", "White Beans"],
+        "Vitamin B12": ["Beef Steak", "Salmon", "Milk", "Egg", "Chicken Breast"]
+    };
+
+    // C: Adjective Weights
+    const adjWeights = {
+        "extreme": 4,
+        "severe": 4,
+        "very": 3,
+        "some": 3,
+        "moderate": 3,
+        "slight": 2,
+        "mild": 2,
+        "bit": 2
+    };
+
+    // D: wtsym Mapping (weight + symptom -> nutrient)
+    const wtsymMapping = {
+        "4-fatigue": "Iron",
+        "2-fatigue": "Vitamin B9",
+        "3-fatigue": "Magnesium",
+        "4-pain": "Vitamin D",
+        "2-pain": "Calcium",
+        "4-headache": "Magnesium",
+        "4-cramp": "Potassium",
+        "2-cramp": "Calcium",
+        "4-stomachache": "Vitamin B12"
+    };
+
     const foodData = {
         "Rice": {cal: 362, carb: true}, "Pasta": {cal: 348, carb: true}, "Potato": {cal: 87, carb: true},
         "Spaghetti": {cal: 371, carb: true}, "Noodles": {cal: 371, carb: true}, "Sweet Potato": {cal: 90, carb: true},
@@ -25,116 +65,102 @@ function generate_response(x) {
         "Egg": {cal: 155, carb: false}, "Tofu": {cal: 83, carb: false}, "Milk": {cal: 61, carb: false}
     };
 
-    const calMatch = inp.match(/(\d+(?:\.\d+)?)\s*(calories?|kcals?|cals?)/);
-    
-    if (calMatch) {
-        let rawVal = parseFloat(calMatch[1]);
-        const unit = calMatch[2];
-        let targetCalories = (unit === "cal" || unit === "cals") ? rawVal / 1000 : rawVal;
+    // --- ALGORITHM LOGIC ---
 
-        // Selection pool with 3x weighting for carbs
-        const foodKeys = Object.keys(foodData);
-        let weightedPool = [];
-        foodKeys.forEach(key => {
-            let weight = foodData[key].carb ? 3 : 1;
-            for(let i = 0; i < weight; i++) weightedPool.push(key);
-        });
+    let detectedSym = symptoms.find(s => inp.includes(s));
+    let detectedAdj = Object.keys(adjWeights).find(a => inp.includes(a));
 
-        let selected = [];
-        while (selected.length < 3) {
-            let randomFood = weightedPool[Math.floor(Math.random() * weightedPool.length)];
-            if (!selected.includes(randomFood)) selected.push(randomFood);
-        }
+    if (detectedSym && detectedAdj) {
+        let weight = adjWeights[detectedAdj];
+        let lookupKey = `${weight}-${detectedSym}`;
+        let nutrient = wtsymMapping[lookupKey] || "General Multivitamins";
 
-        // Bias the calorie distribution toward the carb-heavy ingredient
-        let calorieWeights = selected.map(ing => foodData[ing].carb ? 2.0 : 0.5);
-        let totalCalWeight = calorieWeights.reduce((a, b) => a + b, 0);
-        let normalizedCalRatios = calorieWeights.map(w => w / totalCalWeight);
+        // Get 3 random foods from the top 5 for that nutrient
+        let possibleFoods = nutrientFoods[nutrient] || ["Spinach", "Egg", "Salmon"];
+        let shuffled = possibleFoods.sort(() => 0.5 - Math.random());
+        let selectedFoods = shuffled.slice(0, 3);
 
-        let ingredientResults = selected.map((ing, i) => {
-            let calContribution = targetCalories * normalizedCalRatios[i];
-            let grams = (calContribution / foodData[ing].cal) * 100;
-            return { name: ing, grams: grams, cals: calContribution };
-        });
-
-        // 600g Ceiling Logic
-        let totalWeight = ingredientResults.reduce((sum, item) => sum + item.grams, 0);
-        if (totalWeight > 600 && targetCalories < 2500) {
-            let scaleFactor = 600 / totalWeight;
-            ingredientResults.forEach(item => {
-                item.grams *= scaleFactor;
-            });
-        }
-
-        const actions = {
-            solid: ["finely dice", "roughly chop", "sear", "slow-roast", "toast", "steam", "julienne"],
-            liquid: ["gently whisk", "infuse", "simmer", "warm"],
-            combine: ["fold it into", "toss it with", "layer it atop", "drizzle it over"]
-        };
-        const servingStyles = ["on a bed of moss.", "on a charred cedar plank.", "with a minimalist aesthetic.", "in a rustic skillet."];
-
-        const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
-        const isLiquid = (f) => ["Milk", "Egg", "Tofu"].includes(f);
-
-        // Prepare messages
-        let msg1 = `Custom recipe plan (${targetCalories.toLocaleString()} kcal)`;
-        let msg2 = `Ingredients list:`;
-        let msg3 = ingredientResults.map(item => `• ${item.name}: ${item.grams.toFixed(1)}g`).join("\n");
-        let msg4 = `Preparation steps:`;
-        let s1 = `Step 1: ${isLiquid(selected[0]) ? getRandom(actions.liquid) : getRandom(actions.solid)} the ${selected[0].toLowerCase()} for the base.`;
-        let s2 = `Step 2: Prepare the ${selected[1].toLowerCase()} and ${getRandom(actions.combine)} your mixture.`;
-        let s3 = `Step 3: Finally, ${getRandom(actions.combine)} the ${selected[2].toLowerCase()} and serve ${getRandom(servingStyles)}`;
-        let s4 = `Enjoy your meal!`;
-        dispatch_messages([msg1, msg2, msg3, msg4, s1, s2, s3, s4]);
-        check = 1
-    }
-    const symptomMap = {
-        "headache": ["Magnesium", "Riboflavin (B2)", "Water", "Coenzyme Q10"],
-        "migraine": ["Magnesium", "Riboflavin (B2)", "Water", "Coenzyme Q10"],
-        "stomach": ["Dietary Fiber", "Probiotics", "Zinc", "Vitamin B12"],
-        "belly": ["Dietary Fiber", "Probiotics", "Zinc", "Vitamin B12"],
-        "digestion": ["Dietary Fiber", "Probiotics", "Zinc", "Vitamin B12"],
-        "hip": ["Vitamin D", "Calcium", "Vitamin K2", "Magnesium"],
-        "bone": ["Vitamin D", "Calcium", "Vitamin K2", "Magnesium"],
-        "cramp": ["Potassium", "Magnesium", "Calcium", "Sodium (Electrolytes)"],
-        "muscle": ["Potassium", "Magnesium", "Calcium", "Sodium (Electrolytes)"],
-        "fatigue": ["Iron", "Vitamin B12", "Folate", "Magnesium", "Vitamin D"],
-        "tired": ["Iron", "Vitamin B12", "Folate", "Magnesium", "Vitamin D"],
-        "exhausted": ["Iron", "Vitamin B12", "Folate", "Magnesium", "Vitamin D"],
-        "skin": ["Omega-3 Fatty Acids", "Vitamin A", "Vitamin E", "Zinc"],
-        "hair": ["Biotin (B7)", "Iron", "Zinc", "Protein"],
-        "nails": ["Biotin (B7)", "Iron", "Zinc", "Protein"],
-        "gum": ["Vitamin C", "Vitamin K"],
-        "vision": ["Vitamin A"],
-        "eyes": ["Vitamin A"],
-        "mouth": ["Vitamin B12", "Iron", "Folate", "Riboflavin"],
-        "ulcer": ["Vitamin B12", "Iron", "Folate", "Riboflavin"],
-        "joint": ["Omega-3 Fatty Acids", "Vitamin C", "Vitamin D"],
-        "stiff": ["Omega-3 Fatty Acids", "Vitamin C", "Vitamin D"],
-        "tingling": ["Vitamin B12", "Vitamin B6", "Folate"],
-        "numb": ["Vitamin B12", "Vitamin B6", "Folate"],
-        "healing": ["Vitamin C", "Zinc", "Protein"],
-        "fog": ["Omega-3 Fatty Acids", "Iron", "Iodine", "Vitamin B12"],
-        "concentrate": ["Omega-3 Fatty Acids", "Iron", "Iodine", "Vitamin B12"]
-    };
-
-    let foundNutrients = new Set();
-    Object.keys(symptomMap).forEach(symptom => {
-        if (inp.includes(symptom)) {
-            symptomMap[symptom].forEach(n => foundNutrients.add(n));
-        }
-    });
-
-    if (foundNutrients.size > 0) {
-        let nutrientMsgs = ["I've analyzed your symptoms. You might be lacking:"];
-        foundNutrients.forEach(nutr => nutrientMsgs.push(`• ${nutr}`));
-        nutrientMsgs.push("Keep in mind, I'm an AI, not a doctor. Please consult a professional!");
-        dispatch_messages(nutrientMsgs);
+        // Prepare output messages
+        let res1 = `As you are suffering from "${detectedAdj}" "${detectedSym}", I suspect you are deficient in "${nutrient}".`;
+        
+        // Formatting suggested recipe string
+        let recipeItems = selectedFoods.map(food => {
+            let isCarb = foodData[food] ? foodData[food].carb : false;
+            return `${food} (${isCarb ? "100g" : "50g"})`;
+        }).join(", ");
+        
+        let res2 = `Suggested recipe ingredients: ${recipeItems}`;
+        let res3 = `Generating randomized nutrient-dense meal plan...`;
+        
+        dispatch_messages([res1, res2, res3, "Enjoy your recovery meal!"]);
         check = 1;
     }
-if (check===0){
-    dispatch_messages(["I do understand your query!","Try inputting the following:","How do I get more vitamin B?","Where can I find (supplement name)?","I'm feeling a bit unwell.","Please generate a 500 kcal healthy meal recipe."])
-}
-    
 
+    // --- CALORIE RECIPE LOGIC (KEEPING EXISTING) ---
+    if (check === 0) {
+        const calMatch = inp.match(/(\d+(?:\.\d+)?)\s*(calories?|kcals?|cals?)/);
+        if (calMatch) {
+            let rawVal = parseFloat(calMatch[1]);
+            const unit = calMatch[2];
+            let targetCalories = (unit === "cal" || unit === "cals") ? rawVal / 1000 : rawVal;
+
+            const foodKeys = Object.keys(foodData);
+            let weightedPool = [];
+            foodKeys.forEach(key => {
+                let weight = foodData[key].carb ? 3 : 1;
+                for(let i = 0; i < weight; i++) weightedPool.push(key);
+            });
+
+            let selected = [];
+            while (selected.length < 3) {
+                let randomFood = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+                if (!selected.includes(randomFood)) selected.push(randomFood);
+            }
+
+            let calorieWeights = selected.map(ing => foodData[ing].carb ? 2.0 : 0.5);
+            let totalCalWeight = calorieWeights.reduce((a, b) => a + b, 0);
+            let normalizedCalRatios = calorieWeights.map(w => w / totalCalWeight);
+
+            let ingredientResults = selected.map((ing, i) => {
+                let calContribution = targetCalories * normalizedCalRatios[i];
+                let grams = (calContribution / foodData[ing].cal) * 100;
+                return { name: ing, grams: grams, cals: calContribution };
+            });
+
+            let totalWeight = ingredientResults.reduce((sum, item) => sum + item.grams, 0);
+            if (totalWeight > 600 && targetCalories < 2500) {
+                let scaleFactor = 600 / totalWeight;
+                ingredientResults.forEach(item => { item.grams *= scaleFactor; });
+            }
+
+            const actions = {
+                solid: ["finely dice", "roughly chop", "sear", "slow-roast", "toast", "steam", "julienne"],
+                liquid: ["gently whisk", "infuse", "simmer", "warm"],
+                combine: ["fold it into", "toss it with", "layer it atop", "drizzle it over"]
+            };
+            const servingStyles = ["on a bed of moss.", "on a charred cedar plank.", "with a minimalist aesthetic.", "in a rustic skillet."];
+
+            const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+            const isLiquid = (f) => ["Milk", "Egg", "Tofu"].includes(f);
+
+            let msg1 = `Custom recipe plan (${targetCalories.toLocaleString()} kcal)`;
+            let msg2 = `Ingredients list:`;
+            let msg3 = ingredientResults.map(item => `• ${item.name}: ${item.grams.toFixed(1)}g`).join("\n");
+            let s1 = `Step 1: ${isLiquid(selected[0]) ? getRandom(actions.liquid) : getRandom(actions.solid)} the ${selected[0].toLowerCase()}.`;
+            let s2 = `Step 2: Prepare the ${selected[1].toLowerCase()} and ${getRandom(actions.combine)} it.`;
+            let s3 = `Step 3: Serve ${getRandom(servingStyles)}`;
+            
+            dispatch_messages([msg1, msg2, msg3, s1, s2, s3]);
+            check = 1;
+        }
+    }
+
+    // --- FALLBACK LOGIC ---
+    if (check === 0) {
+        dispatch_messages([
+            "I do understand your query!",
+            "Try inputting: 'I have extreme fatigue' or 'I want a 500 kcal recipe'.",
+            "I can analyze symptoms based on intensity now!"
+        ]);
+    }
 }
