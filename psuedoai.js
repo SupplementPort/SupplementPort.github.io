@@ -447,7 +447,7 @@ function generate_response(x) {
         }
         
         // CRITICAL FIX: Set default when no adjective found
-        let finalAdjDisplay = "some";
+        let finalAdjDisplay = "moderate";
         let finalWeight = 2; // Default moderate weight
         
         if (detectedAdj !== null) {
@@ -603,6 +603,257 @@ function generate_response(x) {
         }
     }
 
+
+// --- SUPPLEMENT REQUEST FEATURE ---
+
+// Check if user is asking about supplements
+const supplementKeywords = ["supplement", "supplements", "vitamin", "mineral", "nutrient", "get more", "increase my", "boost my", "need more", "deficient in"];
+const nutrientList = ["vitamin a", "vitamin b", "vitamin b1", "vitamin b2", "vitamin b3", "vitamin b5", "vitamin b6", "vitamin b7", "vitamin b9", "vitamin b12", "vitamin c", "vitamin d", "vitamin e", "vitamin k", "iron", "calcium", "magnesium", "potassium", "zinc", "folate", "omega 3", "omega-3", "fiber", "dietary fiber", "probiotics", "iodine", "selenium", "copper", "manganese", "chromium"];
+
+// Preset supplement data with Hong Kong stores (latitude: 22°08'N to 22°35'N, longitude: 113°49'E to 114°31'E)
+const supplementData = {
+    "vitamin a": {
+        supplement: "Retinol 10,000 IU Softgels",
+        store: "Mannings (Central Store)",
+        lat: 22.28123,
+        lng: 114.15678
+    },
+    "vitamin b": {
+        supplement: "Vitamin B-Complex with B12",
+        store: "Watsons (Causeway Bay)",
+        lat: 22.28045,
+        lng: 114.18392
+    },
+    "vitamin b1": {
+        supplement: "Thiamine HCl 100mg Tablets",
+        store: "Fanda (Tsim Sha Tsui)",
+        lat: 22.29612,
+        lng: 114.17234
+    },
+    "vitamin b2": {
+        supplement: "Riboflavin 100mg Capsules",
+        store: "Mannings (Mong Kok)",
+        lat: 22.31789,
+        lng: 114.16845
+    },
+    "vitamin b3": {
+        supplement: "Niacinamide 500mg Tablets",
+        store: "Watsons (Jordan)",
+        lat: 22.30456,
+        lng: 114.17023
+    },
+    "vitamin b5": {
+        supplement: "Pantothenic Acid 250mg Caps",
+        store: "HK Supplement Store (Wan Chai)",
+        lat: 22.27543,
+        lng: 114.17289
+    },
+    "vitamin b6": {
+        supplement: "Pyridoxine HCl 100mg Tablets",
+        store: "Mannings (Admiralty)",
+        lat: 22.27834,
+        lng: 114.16567
+    },
+    "vitamin b7": {
+        supplement: "Biotin 10,000mcg Capsules",
+        store: "Watsons (Quarry Bay)",
+        lat: 22.28734,
+        lng: 114.21234
+    },
+    "vitamin b9": {
+        supplement: "Folate 800mcg (Methylfolate)",
+        store: "Fanda (North Point)",
+        lat: 22.29123,
+        lng: 114.20456
+    },
+    "vitamin b12": {
+        supplement: "Methylcobalamin 1000mcg Lozenges",
+        store: "Mannings (Shatin)",
+        lat: 22.37845,
+        lng: 114.18765
+    },
+    "vitamin c": {
+        supplement: "Ester-C 1000mg with Bioflavonoids",
+        store: "Watsons (Tsim Sha Tsui)",
+        lat: 22.29612,
+        lng: 114.17234
+    },
+    "vitamin d": {
+        supplement: "Vitamin D3 2000IU Softgels",
+        store: "Mannings (Causeway Bay)",
+        lat: 22.28045,
+        lng: 114.18392
+    },
+    "vitamin e": {
+        supplement: "Mixed Tocopherols 400IU",
+        store: "Fanda (Central)",
+        lat: 22.28123,
+        lng: 114.15678
+    },
+    "vitamin k": {
+        supplement: "Vitamin K2 MK-7 100mcg Drops",
+        store: "Health Store (Happy Valley)",
+        lat: 22.26478,
+        lng: 114.18456
+    },
+    "iron": {
+        supplement: "Iron Bisglycinate 25mg Capsules",
+        store: "Mannings (Wan Chai)",
+        lat: 22.27543,
+        lng: 114.17289
+    },
+    "calcium": {
+        supplement: "Calcium Citrate + D3 600mg",
+        store: "Watsons (Lai Chi Kok)",
+        lat: 22.33456,
+        lng: 114.14876
+    },
+    "magnesium": {
+        supplement: "Magnesium Glycinate 400mg Caps",
+        store: "Fanda (Tsuen Wan)",
+        lat: 22.36891,
+        lng: 114.11234
+    },
+    "potassium": {
+        supplement: "Potassium Citrate 99mg Tablets",
+        store: "Mannings (Kwun Tong)",
+        lat: 22.31234,
+        lng: 114.22456
+    },
+    "zinc": {
+        supplement: "Zinc Picolinate 50mg Capsules",
+        store: "Watsons (Yuen Long)",
+        lat: 22.44345,
+        lng: 114.02890
+    },
+    "folate": {
+        supplement: "Folate 800mcg (Methylfolate)",
+        store: "Fanda (North Point)",
+        lat: 22.29123,
+        lng: 114.20456
+    },
+    "omega 3": {
+        supplement: "Fish Oil 1000mg (EPA 180mg/DHA 120mg)",
+        store: "Mannings (Kennedy Town)",
+        lat: 22.27901,
+        lng: 114.12345
+    },
+    "omega-3": {
+        supplement: "Fish Oil 1000mg (EPA 180mg/DHA 120mg)",
+        store: "Mannings (Kennedy Town)",
+        lat: 22.27901,
+        lng: 114.12345
+    },
+    "fiber": {
+        supplement: "Psyllium Husk Powder 500mg",
+        store: "Watsons (Hung Hom)",
+        lat: 22.30423,
+        lng: 114.18234
+    },
+    "dietary fiber": {
+        supplement: "Psyllium Husk Powder 500mg",
+        store: "Watsons (Hung Hom)",
+        lat: 22.30423,
+        lng: 114.18234
+    },
+    "probiotics": {
+        supplement: "Probiotic 50 Billion CFU (15 Strains)",
+        store: "Fanda (Kowloon Bay)",
+        lat: 22.32056,
+        lng: 114.21056
+    },
+    "iodine": {
+        supplement: "Potassium Iodide 225mcg Tablets",
+        store: "Mannings (Tai Koo)",
+        lat: 22.28734,
+        lng: 114.21234
+    },
+    "selenium": {
+        supplement: "Selenomethionine 200mcg Capsules",
+        store: "Watsons (Aberdeen)",
+        lat: 22.24867,
+        lng: 114.15123
+    },
+    "copper": {
+        supplement: "Copper Glycinate 2mg Capsules",
+        store: "Health Store (Sheung Wan)",
+        lat: 22.28654,
+        lng: 114.14892
+    },
+    "chromium": {
+        supplement: "Chromium Picolinate 200mcg Tablets",
+        store: "Mannings (Ma On Shan)",
+        lat: 22.42091,
+        lng: 114.22634
+    }
+};
+
+// Check if user is asking about supplements
+let isSupplementRequest = false;
+let detectedNutrient = null;
+
+// First check if it's a supplement-related query
+for (let keyword of supplementKeywords) {
+    if (inp.includes(keyword)) {
+        isSupplementRequest = true;
+        break;
+    }
+}
+
+// If supplement request detected, find which nutrient
+if (isSupplementRequest) {
+    for (let nutrient of nutrientList) {
+        if (inp.includes(nutrient)) {
+            detectedNutrient = nutrient;
+            break;
+        }
+    }
+    
+    // Also check for partial matches like "b12" without "vitamin"
+    if (!detectedNutrient) {
+        if (inp.includes("b12") || inp.includes("b-12")) detectedNutrient = "vitamin b12";
+        else if (inp.includes("b9") || inp.includes("b-9") || inp.includes("folate")) detectedNutrient = "vitamin b9";
+        else if (inp.includes("b6") || inp.includes("b-6")) detectedNutrient = "vitamin b6";
+        else if (inp.includes("b3") || inp.includes("b-3")) detectedNutrient = "vitamin b3";
+        else if (inp.includes("b2") || inp.includes("b-2")) detectedNutrient = "vitamin b2";
+        else if (inp.includes("b1") || inp.includes("b-1")) detectedNutrient = "vitamin b1";
+        else if (inp.includes("c")) detectedNutrient = "vitamin c";
+        else if (inp.includes("d3")) detectedNutrient = "vitamin d";
+        else if (inp.includes("k2")) detectedNutrient = "vitamin k";
+    }
+    
+    // If a nutrient was detected, output supplement info
+    if (detectedNutrient) {
+        const data = supplementData[detectedNutrient];
+        if (data) {
+            let res1 = `For ${detectedNutrient.toUpperCase()} deficiency, I recommend: ${data.supplement}`;
+            let res2 = `Available at: ${data.store}`;
+            let res3 = `Store Location: (${data.lat.toFixed(5)}°, ${data.lng.toFixed(5)}°)`;
+            let res4 = `Note: Always consult a healthcare professional before starting any supplement regimen.`;
+            
+            dispatch_messages([res1, res2, res3, res4]);
+            check = 1;
+        } else {
+            // Fallback for detected nutrient without specific data
+            let res1 = `For ${detectedNutrient.toUpperCase()}, consider a high-quality supplement from reputable brands.`;
+            let res2 = `Available at: Mannings or Watsons stores across Hong Kong`;
+            let res3 = `Store Location (Central): (22.28123°, 114.15678°)`;
+            
+            dispatch_messages([res1, res2, res3]);
+            check = 1;
+        }
+    } else if (isSupplementRequest) {
+        // User asked about supplements but didn't specify which nutrient
+        let res1 = "Which nutrient are you looking for? I can recommend supplements for:";
+        let res2 = "Vitamin B12, Vitamin D, Iron, Magnesium, Zinc, Calcium, Omega-3, Probiotics, and more!";
+        let res3 = "Try asking: 'How can I get more Vitamin B12?' or 'Where to buy Magnesium supplements?'";
+        
+        dispatch_messages([res1, res2, res3]);
+        check = 1;
+    }
+}
+
+    
     // --- FALLBACK LOGIC ---
     if (check === 0) {
         dispatch_messages([
