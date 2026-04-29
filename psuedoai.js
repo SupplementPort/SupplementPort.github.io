@@ -1,4 +1,4 @@
-// Helper to send individual bubbles with a slight delay
+
 function dispatch_messages(messageArray) {
     messageArray.forEach((msg, index) => {
         setTimeout(() => {
@@ -58,13 +58,10 @@ function generate_response(x) {
 
         // 600g Ceiling Logic
         let totalWeight = ingredientResults.reduce((sum, item) => sum + item.grams, 0);
-        
-        // If it's a normal calorie request but exceeds 600g, we force-scale densities
         if (totalWeight > 600 && targetCalories < 2500) {
             let scaleFactor = 600 / totalWeight;
             ingredientResults.forEach(item => {
                 item.grams *= scaleFactor;
-                // Note: calories will technically be lower here to fit the weight cap
             });
         }
 
