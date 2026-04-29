@@ -107,25 +107,48 @@
         align-items: center;
         }
 
-        .chat-box {
-            height: 300px;
-            padding: 20px;
-            overflow-y: auto;
-            background: #fff;
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-        }
+        /* 1. Reduce the container gap */
+.chat-box {
+    height: 300px;
+    padding: 20px;
+    overflow-y: auto;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 2px; /* Controls the space between messages */
+}
 
-        .message {
+/* 2. Reduce or remove the message margin */
+.message {
     max-width: 70%;
     padding: 10px 15px;
     border-radius: 15px;
-    margin: 4px; 
+    margin: 2px 0; /* Changed from 4px to 2px top/bottom, 0 left/right */
     line-height: 1.4;
     word-wrap: break-word;
     position: relative;
 }
+.chat-box {
+    height: 300px;
+    padding: 20px;
+    overflow-y: auto;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 2px; 
+}
+
+
+.message {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    margin: 2px 0; 
+    line-height: 1.4;
+    word-wrap: break-word;
+    position: relative;
+}
+
 
         .ai-message {
             background: #eef5ff;
