@@ -31,11 +31,11 @@ function generate_response(x) {
         const unit = calMatch[2];
         let targetCalories = (unit === "cal" || unit === "cals") ? rawVal / 1000 : rawVal;
 
-        // Selection pool with 10x weighting for carbs
+        // Selection pool with 3x weighting for carbs
         const foodKeys = Object.keys(foodData);
         let weightedPool = [];
         foodKeys.forEach(key => {
-            let weight = foodData[key].carb ? 10 : 1;
+            let weight = foodData[key].carb ? 3 : 1;
             for(let i = 0; i < weight; i++) weightedPool.push(key);
         });
 
