@@ -75,7 +75,7 @@ const foodCalories = {
     "spinach": 23,
     "strawberry": 32,
     "strawberries": 32,
-    "sweetpotato": 90,
+    "": 90,
     "tofu": 83,
     "tomato": 18,
     "tomatoes": 18,
