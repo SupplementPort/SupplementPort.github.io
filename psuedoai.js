@@ -659,8 +659,9 @@ function generate_response(x, showStorePanelCallback) {
         let detectedNutrient = null;
         
         // Check for specific nutrients in order of specificity
-        const nutrientPatterns = [
-    // B-Vitamins (Specific first)
+        
+  const nutrientPatterns = [
+    // B-vitamins (specific codes first to prevent partial matching)
     { pattern: /vitamin\s*(?:b12|b-12|cobalamin|methylcobalamin)/i, nutrient: "vitamin b12" },
     { pattern: /(?:vitamin\s*(?:b9|b-9)|folate|folic\s*acid)/i, nutrient: "vitamin b9" },
     { pattern: /vitamin\s*(?:b6|b-6|pyridoxine)/i, nutrient: "vitamin b6" },
@@ -669,14 +670,14 @@ function generate_response(x, showStorePanelCallback) {
     { pattern: /vitamin\s*(?:b1|b-1|thiamine)/i, nutrient: "vitamin b1" },
     { pattern: /vitamin\s*(?:b|b[- ]*complex)/i, nutrient: "vitamin b" },
 
-    // Standard Vitamins
+    // Standard vitamins
     { pattern: /vitamin\s*(?:c|ascorbic\s*acid)/i, nutrient: "vitamin c" },
     { pattern: /vitamin\s*(?:d3?|calciferol|cholecalciferol)/i, nutrient: "vitamin d" },
     { pattern: /vitamin\s*(?:e|tocopherol)/i, nutrient: "vitamin e" },
     { pattern: /vitamin\s*(?:k[12]?|phylloquinone|menaquinone)/i, nutrient: "vitamin k" },
     { pattern: /\bvitamin\s*a\b/i, nutrient: "vitamin a" },
 
-    // Minerals & Elements
+    // Minerals
     { pattern: /\bcalcium\b/i, nutrient: "calcium" },
     { pattern: /\bmagnesium\b/i, nutrient: "magnesium" },
     { pattern: /\bpotassium\b/i, nutrient: "potassium" },
@@ -687,11 +688,12 @@ function generate_response(x, showStorePanelCallback) {
     { pattern: /\bcopper\b/i, nutrient: "copper" },
     { pattern: /\bchromium\b/i, nutrient: "chromium" },
 
-    // Specialized Nutrients
-    { pattern: /\b(?:fiber|fibre|dietary\s*fiber|roughage)\b/i, nutrient: "fiber" },
-    { pattern: /\b(?:probiotic|probiotics|gut\s*health|lactobacillus|bifidobacterium)\b/i, nutrient: "probiotics" },
+    // The Fix: Omega 3 (Handles "omega 3", "omega-3", "omega3", "fish oil", "EPA", "DHA")
     { pattern: /\b(?:omega[- ]*3|fish\s*oil|epa|dha)\b/i, nutrient: "omega 3" },
-    { pattern: /\b(?:psyllium|ispaghula)\b/i, nutrient: "fiber" }
+
+    // Specialized
+    { pattern: /\b(?:fiber|fibre|dietary\s*fiber|roughage|psyllium)\b/i, nutrient: "fiber" },
+    { pattern: /\b(?:probiotic|probiotics|gut\s*health|lactobacillus|bifidobacterium)\b/i, nutrient: "probiotics" }
 ];
         
         // Try to match patterns
