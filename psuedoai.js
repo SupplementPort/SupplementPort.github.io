@@ -11,7 +11,7 @@ function dispatch_messages(messageArray) {
     });
 }
 
-function generate_response(x) {
+function generate_response(x, showStorePanelCallback) {
     let check = 0;
     const inp = String(x).toLowerCase();
 
@@ -26,21 +26,27 @@ function generate_response(x) {
         "lethargy": "fatigue",
         "weakness": "fatigue",
         "low energy": "fatigue",
+        "lack of energy": "fatigue",
+        "feeling tired": "fatigue",
+        "drained": "fatigue",
         
         // Pain-related
         "pain": "pain",
         "aches": "pain",
         "soreness": "pain",
+        "aching": "pain",
         
         // Head-related
         "headache": "headache",
         "migraine": "headache",
+        "head pain": "headache",
         
         // Muscle-related
         "cramp": "cramp",
         "cramps": "cramp",
         "muscle spasm": "cramp",
         "muscle pain": "cramp",
+        "muscle ache": "cramp",
         
         // Stomach/digestive
         "stomachache": "stomachache",
@@ -53,30 +59,37 @@ function generate_response(x) {
         "irregular bowel": "constipation",
         "diarrhea": "diarrhea",
         "loose stool": "diarrhea",
+        "runny stool": "diarrhea",
         
         // Additional common symptoms
         "dizziness": "dizziness",
         "dizzy": "dizziness",
         "vertigo": "dizziness",
+        "lightheaded": "dizziness",
         
         "nausea": "nausea",
         "queasy": "nausea",
+        "sick to stomach": "nausea",
         
         "insomnia": "insomnia",
         "can't sleep": "insomnia",
         "sleep issues": "insomnia",
+        "trouble sleeping": "insomnia",
         
         "anxiety": "anxiety",
         "nervousness": "anxiety",
         "restlessness": "anxiety",
+        "panic": "anxiety",
         
         "depression": "depression",
         "sadness": "depression",
         "low mood": "depression",
+        "feeling down": "depression",
         
         "brain fog": "brainfog",
         "confusion": "brainfog",
         "poor concentration": "brainfog",
+        "foggy": "brainfog",
         
         "joint pain": "jointpain",
         "joint ache": "jointpain",
@@ -87,22 +100,28 @@ function generate_response(x) {
         
         "hair loss": "hairloss",
         "thinning hair": "hairloss",
+        "hair falling out": "hairloss",
         
         "dry skin": "dryskin",
         "skin issues": "dryskin",
+        "dryness": "dryskin",
         
         "brittle nails": "brittlenails",
         "weak nails": "brittlenails",
+        "breaking nails": "brittlenails",
         
         "cold hands": "coldintolerance",
         "cold feet": "coldintolerance",
         "always cold": "coldintolerance",
+        "cold intolerance": "coldintolerance",
         
         "shortness of breath": "shortnessbreath",
         "breathing difficulty": "shortnessbreath",
+        "hard to breathe": "shortnessbreath",
         
         "heart palpitations": "palpitations",
         "racing heart": "palpitations",
+        "irregular heartbeat": "palpitations",
         
         "tingling": "tingling",
         "numbness": "tingling",
@@ -114,34 +133,37 @@ function generate_response(x) {
         
         "poor appetite": "poorappetite",
         "loss of appetite": "poorappetite",
+        "not hungry": "poorappetite",
         
         "weight loss": "weightloss",
         "unexplained weight loss": "weightloss",
+        "losing weight": "weightloss",
         
         "weight gain": "weightgain",
-        "unexplained weight gain": "weightgain"
+        "unexplained weight gain": "weightgain",
+        "gaining weight": "weightgain"
     };
 
     // B: Nutrient-rich foods (Top 5 per nutrient)
     const nutrientFoods = {
-        "Iron": ["Spinach", "Beef Steak", "Tofu", "Lentils", "Quinoa"],
-        "Folate": ["Asparagus", "Broccoli", "Avocado", "Brussels Sprouts", "Lettuce"],
-        "Magnesium": ["Dark Chocolate", "Almonds", "Black Beans", "Pumpkin Seeds", "Yogurt"],
-        "Vitamin D": ["Salmon", "Egg", "Milk", "Mushrooms", "Sardines"],
-        "Calcium": ["Milk", "Cheese", "Tofu", "Chia Seeds", "Kale"],
-        "Potassium": ["Banana", "Sweet Potato", "Spinach", "Coconut Water", "White Beans"],
-        "Vitamin B12": ["Beef Steak", "Salmon", "Milk", "Egg", "Chicken Breast"],
-        "Zinc": ["Pumpkin Seeds", "Beef Steak", "Chicken Breast", "Cashews", "Chickpeas"],
-        "Vitamin C": ["Orange", "Bell Pepper", "Broccoli", "Strawberry", "Kiwi"],
-        "Vitamin A": ["Carrot", "Sweet Potato", "Spinach", "Kale", "Pumpkin"],
-        "Vitamin E": ["Almonds", "Sunflower Seeds", "Spinach", "Avocado", "Peanuts"],
-        "Omega-3": ["Salmon", "Sardines", "Walnuts", "Flaxseeds", "Chia Seeds"],
-        "Iodine": ["Seaweed", "Cod", "Yogurt", "Milk", "Egg"],
-        "Selenium": ["Brazil Nuts", "Tuna", "Sardines", "Egg", "Sunflower Seeds"],
-        "Dietary Fiber": ["Oats", "Lentils", "Chia Seeds", "Broccoli", "Apple"],
-        "Probiotics": ["Yogurt", "Kefir", "Kimchi", "Sauerkraut", "Kombucha"],
-        "Vitamin B6": ["Chicken Breast", "Banana", "Potato", "Spinach", "Sunflower Seeds"],
-        "Sodium": ["Sea Salt", "Pickles", "Olives", "Celery", "Beets"]
+        "Iron": ["🥩 Spinach", "🥩 Beef Steak", "🥩 Tofu", "🥩 Lentils", "🥩 Quinoa"],
+        "Folate": ["🥦 Asparagus", "🥦 Broccoli", "🥑 Avocado", "🥦 Brussels Sprouts", "🥬 Lettuce"],
+        "Magnesium": ["🍫 Dark Chocolate", "🌰 Almonds", "🫘 Black Beans", "🎃 Pumpkin Seeds", "🥛 Yogurt"],
+        "Vitamin D": ["🐟 Salmon", "🥚 Egg", "🥛 Milk", "🍄 Mushrooms", "🐟 Sardines"],
+        "Calcium": ["🥛 Milk", "🧀 Cheese", "🥩 Tofu", "🌰 Chia Seeds", "🥬 Kale"],
+        "Potassium": ["🍌 Banana", "🍠 Sweet Potato", "🥬 Spinach", "🥥 Coconut Water", "🫘 White Beans"],
+        "Vitamin B12": ["🥩 Beef Steak", "🐟 Salmon", "🥛 Milk", "🥚 Egg", "🍗 Chicken Breast"],
+        "Zinc": ["🎃 Pumpkin Seeds", "🥩 Beef Steak", "🍗 Chicken Breast", "🌰 Cashews", "🫘 Chickpeas"],
+        "Vitamin C": ["🍊 Orange", "🫑 Bell Pepper", "🥦 Broccoli", "🍓 Strawberry", "🥝 Kiwi"],
+        "Vitamin A": ["🥕 Carrot", "🍠 Sweet Potato", "🥬 Spinach", "🥬 Kale", "🎃 Pumpkin"],
+        "Vitamin E": ["🌰 Almonds", "🌻 Sunflower Seeds", "🥬 Spinach", "🥑 Avocado", "🥜 Peanuts"],
+        "Omega-3": ["🐟 Salmon", "🐟 Sardines", "🌰 Walnuts", "🌱 Flaxseeds", "🌰 Chia Seeds"],
+        "Iodine": ["🌿 Seaweed", "🐟 Cod", "🥛 Yogurt", "🥛 Milk", "🥚 Egg"],
+        "Selenium": ["🌰 Brazil Nuts", "🐟 Tuna", "🐟 Sardines", "🥚 Egg", "🌻 Sunflower Seeds"],
+        "Dietary Fiber": ["🌾 Oats", "🫘 Lentils", "🌰 Chia Seeds", "🥦 Broccoli", "🍎 Apple"],
+        "Probiotics": ["🥛 Yogurt", "🥛 Kefir", "🥬 Kimchi", "🥬 Sauerkraut", "🍵 Kombucha"],
+        "Vitamin B6": ["🍗 Chicken Breast", "🍌 Banana", "🥔 Potato", "🥬 Spinach", "🌻 Sunflower Seeds"],
+        "Sodium": ["🧂 Sea Salt", "🥒 Pickles", "🫒 Olives", "🌿 Celery", "🌿 Beets"]
     };
 
     // C: Dictionary of weighting values for adjectives (expanded)
@@ -355,7 +377,7 @@ function generate_response(x) {
 
     // Helper function to get random items from array (roll 3/5)
     function getRolledFoods(nutrient) {
-        let foods = nutrientFoods[nutrient] || ["Spinach", "Egg", "Salmon", "Broccoli", "Yogurt"];
+        let foods = nutrientFoods[nutrient] || ["🥬 Spinach", "🥚 Egg", "🐟 Salmon", "🥦 Broccoli", "🥛 Yogurt"];
         // Shuffle array (Fisher-Yates)
         for (let i = foods.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -446,7 +468,7 @@ function generate_response(x) {
             }
         }
         
-        // CRITICAL FIX: Set default when no adjective found
+        // Set default when no adjective found
         let finalAdjDisplay = "moderate";
         let finalWeight = 2; // Default moderate weight
         
@@ -510,34 +532,36 @@ function generate_response(x) {
         // Get 3 random foods from top 5 (roll 3/5)
         let selectedFoods = getRolledFoods(nutrient);
 
-        // Prepare output messages
-        let res1 = `As you are suffering from "${grammaticalAdj}" "${originalSymptom}", I suspect you may be deficient in "${nutrient}".`;
+        // Prepare output messages with emojis
+        let res1 = `🩺 As you are suffering from "${grammaticalAdj}" "${originalSymptom}", I suspect you may be deficient in "${nutrient}".`;
         
         // Format suggested recipe with measurements
         let recipeItems = selectedFoods.map(food => {
-            let isCarb = foodData[food] ? foodData[food].carb : false;
+            // Remove emoji for measurement check
+            let cleanFood = food.replace(/[🥩🥦🥑🍫🌰🫘🎃🥛🐟🥚🍄🧀🥬🍌🍠🥥🍗🫑🍓🥝🥕🌻🥜🌿🍎🌾🍵🥒🫒🧂]/g, '').trim();
+            let isCarb = foodData[cleanFood] ? foodData[cleanFood].carb : false;
             let measurement = isCarb ? "100g" : "50g";
             return `${food} (${measurement})`;
         }).join(", ");
         
-        let res2 = `Suggested recipe: ${recipeItems}`;
+        let res2 = `🍽️ Suggested recipe: ${recipeItems}`;
         
-        // Random recipe generator
+        // Random recipe generator with emojis
         const randomRecipes = [
-            "Try mixing these ingredients with olive oil and herbs for a nutritious meal!",
-            "Blend these together for a smoothie or prepare as a warm bowl.",
-            "Steam or lightly sauté these ingredients to preserve their nutrients.",
-            "Create a hearty salad or soup using these key ingredients.",
-            "Roast these ingredients at 400°F for 20 minutes for a delicious dish.",
-            "Combine these ingredients in a stir-fry with garlic and ginger.",
-            "Make a nutrient-dense smoothie bowl with these ingredients as the base.",
-            "These ingredients work great in a breakfast scramble or omelette.",
-            "Prepare a comforting stew with these ingredients and vegetable broth."
+            "👩‍🍳 Try mixing these ingredients with olive oil and herbs for a nutritious meal!",
+            "🥤 Blend these together for a smoothie or prepare as a warm bowl.",
+            "🔥 Steam or lightly sauté these ingredients to preserve their nutrients.",
+            "🥗 Create a hearty salad or soup using these key ingredients.",
+            "🔥 Roast these ingredients at 400°F for 20 minutes for a delicious dish.",
+            "🍳 Combine these ingredients in a stir-fry with garlic and ginger.",
+            "🥣 Make a nutrient-dense smoothie bowl with these ingredients as the base.",
+            "🍳 These ingredients work great in a breakfast scramble or omelette.",
+            "🍲 Prepare a comforting stew with these ingredients and vegetable broth."
         ];
         let res3 = randomRecipes[Math.floor(Math.random() * randomRecipes.length)];
         
         // Add disclaimer
-        let res4 = "Note: This is not a medical diagnosis. Please consult a healthcare professional for persistent symptoms.";
+        let res4 = "⚠️ Note: This is not a medical diagnosis. Please consult a healthcare professional for persistent symptoms.";
         
         dispatch_messages([res1, res2, res3, res4]);
         check = 1;
@@ -581,330 +605,365 @@ function generate_response(x) {
             }
 
             const actions = {
-                solid: ["finely dice", "roughly chop", "sear", "slow-roast", "toast", "steam", "julienne"],
-                liquid: ["gently whisk", "infuse", "simmer", "warm"],
-                combine: ["fold it into", "toss it with", "layer it atop", "drizzle it over"]
+                solid: ["🔪 finely dice", "🔪 roughly chop", "🔥 sear", "🔥 slow-roast", "🔥 toast", "💨 steam", "🔪 julienne"],
+                liquid: ["🥄 gently whisk", "🌿 infuse", "🔥 simmer", "🔥 warm"],
+                combine: ["🔄 fold it into", "🔄 toss it with", "✨ layer it atop", "💧 drizzle it over"]
             };
-            const servingStyles = ["on a bed of moss.", "on a charred cedar plank.", "with a minimalist aesthetic.", "in a rustic skillet."];
+            const servingStyles = ["🌿 on a bed of moss.", "🪵 on a charred cedar plank.", "🎨 with a minimalist aesthetic.", "🍳 in a rustic skillet."];
 
             const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
             const isLiquid = (f) => ["Milk", "Egg", "Tofu"].includes(f);
 
-            let msg1 = `Custom recipe plan (${targetCalories.toLocaleString()} kcal)`;
-            let msg2 = `Ingredients list:`;
+            let msg1 = `📋 Custom recipe plan (${targetCalories.toLocaleString()} kcal)`;
+            let msg2 = `🛒 Ingredients list:`;
             let msg3 = ingredientResults.map(item => `• ${item.name}: ${item.grams.toFixed(1)}g`).join("\n");
-            let s1 = `Step 1: ${isLiquid(selected[0]) ? getRandom(actions.liquid) : getRandom(actions.solid)} the ${selected[0].toLowerCase()}.`;
-            let s2 = `Step 2: Prepare the ${selected[1].toLowerCase()} and ${getRandom(actions.combine)} it.`;
-            let s3 = `Step 3: Serve ${getRandom(servingStyles)}`;
-            let s4 =  `Enjoy your meal! :D`
+            let s1 = `👩‍🍳 Step 1: ${isLiquid(selected[0]) ? getRandom(actions.liquid) : getRandom(actions.solid)} the ${selected[0].toLowerCase()}.`;
+            let s2 = `👩‍🍳 Step 2: Prepare the ${selected[1].toLowerCase()} and ${getRandom(actions.combine)} it.`;
+            let s3 = `🍽️ Step 3: Serve ${getRandom(servingStyles)}`;
+            let s4 =  `😋 Enjoy your meal! :D`
             
             dispatch_messages([msg1, msg2, msg3, s1, s2, s3, s4]);
             check = 1;
         }
     }
 
-// --- SUPPLEMENT REQUEST FEATURE WITH GOOGLE MAPS IFRAME ---
+    // --- SUPPLEMENT REQUEST FEATURE WITH GOOGLE MAPS IFRAME ---
 
-// Check if user is asking about supplements
-const supplementKeywords = ["supplement", "supplements", "vitamin", "mineral", "nutrient", "get more", "increase my", "boost my", "need more", "deficient in", "where to buy", "where can i buy", "store", "pharmacy"];
-const nutrientList = ["vitamin a", "vitamin b", "vitamin b1", "vitamin b2", "vitamin b3", "vitamin b5", "vitamin b6", "vitamin b7", "vitamin b9", "vitamin b12", "vitamin c", "vitamin d", "vitamin e", "vitamin k", "iron", "calcium", "magnesium", "potassium", "zinc", "folate", "omega 3", "omega-3", "fiber", "dietary fiber", "probiotics", "iodine", "selenium", "copper", "manganese", "chromium"];
+    // Expanded supplement keywords with emojis
+    const supplementKeywords = ["supplement", "supplements", "vitamin", "mineral", "nutrient", "get more", "increase my", "boost my", "need more", "deficient in", "where to buy", "where can i buy", "store", "pharmacy", "supplement store", "health store"];
+    
+    // EXPANDED nutrient aliases - now with many variations
+    const nutrientAliases = {
+        "vitamin a": ["vitamin a", "vit a", "retinol", "beta carotene", "vitamina"],
+        "vitamin b": ["vitamin b", "vit b", "b complex", "b-complex", "vitamin b complex"],
+        "vitamin b1": ["vitamin b1", "vit b1", "thiamine", "b1 vitamin"],
+        "vitamin b2": ["vitamin b2", "vit b2", "riboflavin", "b2 vitamin"],
+        "vitamin b3": ["vitamin b3", "vit b3", "niacin", "niacinamide", "b3 vitamin"],
+        "vitamin b5": ["vitamin b5", "vit b5", "pantothenic acid", "b5 vitamin"],
+        "vitamin b6": ["vitamin b6", "vit b6", "pyridoxine", "b6 vitamin"],
+        "vitamin b7": ["vitamin b7", "vit b7", "biotin", "vitamin h", "b7 vitamin"],
+        "vitamin b9": ["vitamin b9", "vit b9", "folate", "folic acid", "b9 vitamin"],
+        "vitamin b12": ["vitamin b12", "vit b12", "cobalamin", "methylcobalamin", "b12 vitamin", "b-12"],
+        "vitamin c": ["vitamin c", "vit c", "ascorbic acid", "vitaminc", "c vitamin"],
+        "vitamin d": ["vitamin d", "vit d", "calciferol", "vitamind", "d3", "vitamin d3", "d vitamin"],
+        "vitamin e": ["vitamin e", "vit e", "tocopherol", "vitamine", "e vitamin"],
+        "vitamin k": ["vitamin k", "vit k", "phylloquinone", "menaquinone", "k2", "vitamin k2", "k vitamin"],
+        "iron": ["iron", "fe", "ferrous", "ferric", "heme iron", "non-heme iron"],
+        "calcium": ["calcium", "ca", "calcio", "calcium supplement"],
+        "magnesium": ["magnesium", "mg", "magnesio", "magnesium glycinate", "magnesium citrate", "mg supplement"],
+        "potassium": ["potassium", "k", "potasio", "potassium citrate"],
+        "zinc": ["zinc", "zn", "zinc picolinate", "zinc gluconate"],
+        "folate": ["folate", "folic acid", "vitamin b9", "methylfolate"],
+        "omega 3": ["omega 3", "omega-3", "fish oil", "omega3", "omega 3 fatty acids", "epa", "dha"],
+        "fiber": ["fiber", "fibre", "dietary fiber", "dietary fibre", "psyllium", "roughage"],
+        "probiotics": ["probiotic", "probiotics", "gut health", "lactobacillus", "bifidobacterium", "good bacteria"],
+        "iodine": ["iodine", "iodide", "potassium iodide", "i"],
+        "selenium": ["selenium", "se", "selenomethionine"],
+        "copper": ["copper", "cu", "cupric"],
+        "manganese": ["manganese", "mn"],
+        "chromium": ["chromium", "cr", "chromium picolinate"],
+        "vitamin b6": ["vitamin b6", "vit b6", "pyridoxine", "b6 vitamin"],
+        "omega-3": ["omega 3", "omega-3", "fish oil", "omega3"]
+    };
 
-// Preset supplement data with Hong Kong stores (latitude: 22°08'N to 22°35'N, longitude: 113°49'E to 114°31'E)
-const supplementData = {
-    "vitamin a": {
-        supplement: "Retinol 10,000 IU Softgels",
-        store: "Mannings (Central Store)",
-        lat: 22.28123,
-        lng: 114.15678,
-        address: "Shop 101-102, Central Building, 1-3 Pedder Street, Central, Hong Kong"
-    },
-    "vitamin b": {
-        supplement: "Vitamin B-Complex with B12",
-        store: "Watsons (Causeway Bay)",
-        lat: 22.28045,
-        lng: 114.18392,
-        address: "Shop G01-03, Windsor House, 311 Gloucester Road, Causeway Bay, Hong Kong"
-    },
-    "vitamin b1": {
-        supplement: "Thiamine HCl 100mg Tablets",
-        store: "Fanda (Tsim Sha Tsui)",
-        lat: 22.29612,
-        lng: 114.17234,
-        address: "Shop 236-238, Ocean Terminal, Tsim Sha Tsui, Kowloon"
-    },
-    "vitamin b2": {
-        supplement: "Riboflavin 100mg Capsules",
-        store: "Mannings (Mong Kok)",
-        lat: 22.31789,
-        lng: 114.16845,
-        address: "Shop A, G/F, 578 Nathan Road, Mong Kok, Kowloon"
-    },
-    "vitamin b3": {
-        supplement: "Niacinamide 500mg Tablets",
-        store: "Watsons (Jordan)",
-        lat: 22.30456,
-        lng: 114.17023,
-        address: "Shop 1-3, G/F, 246 Nathan Road, Jordan, Kowloon"
-    },
-    "vitamin b5": {
-        supplement: "Pantothenic Acid 250mg Caps",
-        store: "HK Supplement Store (Wan Chai)",
-        lat: 22.27543,
-        lng: 114.17289,
-        address: "Shop B, G/F, 128 Johnston Road, Wan Chai, Hong Kong"
-    },
-    "vitamin b6": {
-        supplement: "Pyridoxine HCl 100mg Tablets",
-        store: "Mannings (Admiralty)",
-        lat: 22.27834,
-        lng: 114.16567,
-        address: "Shop 101, Admiralty Centre, 18 Harcourt Road, Admiralty"
-    },
-    "vitamin b7": {
-        supplement: "Biotin 10,000mcg Capsules",
-        store: "Watsons (Quarry Bay)",
-        lat: 22.28734,
-        lng: 114.21234,
-        address: "Shop 1-5, G/F, 938 King's Road, Quarry Bay"
-    },
-    "vitamin b9": {
-        supplement: "Folate 800mcg (Methylfolate)",
-        store: "Fanda (North Point)",
-        lat: 22.29123,
-        lng: 114.20456,
-        address: "Shop 201-203, City Garden, 233 Electric Road, North Point"
-    },
-    "vitamin b12": {
-        supplement: "Methylcobalamin 1000mcg Lozenges",
-        store: "Mannings (Shatin)",
-        lat: 22.37845,
-        lng: 114.18765,
-        address: "Shop 101-102, New Town Plaza, Shatin, New Territories"
-    },
-    "vitamin c": {
-        supplement: "Ester-C 1000mg with Bioflavonoids",
-        store: "Watsons (Tsim Sha Tsui)",
-        lat: 22.29612,
-        lng: 114.17234,
-        address: "Shop 301-305, Ocean Terminal, Tsim Sha Tsui"
-    },
-    "vitamin d": {
-        supplement: "Vitamin D3 2000IU Softgels",
-        store: "Mannings (Causeway Bay)",
-        lat: 22.28045,
-        lng: 114.18392,
-        address: "Shop G06, Times Square, 1 Matheson Street, Causeway Bay"
-    },
-    "vitamin e": {
-        supplement: "Mixed Tocopherols 400IU",
-        store: "Fanda (Central)",
-        lat: 22.28123,
-        lng: 114.15678,
-        address: "Shop 205, The Landmark, 15 Queen's Road Central"
-    },
-    "vitamin k": {
-        supplement: "Vitamin K2 MK-7 100mcg Drops",
-        store: "Health Store (Happy Valley)",
-        lat: 22.26478,
-        lng: 114.18456,
-        address: "Shop 3, G/F, 68 Blue Pool Road, Happy Valley"
-    },
-    "iron": {
-        supplement: "Iron Bisglycinate 25mg Capsules",
-        store: "Mannings (Wan Chai)",
-        lat: 22.27543,
-        lng: 114.17289,
-        address: "Shop A, G/F, 188 Hennessy Road, Wan Chai"
-    },
-    "calcium": {
-        supplement: "Calcium Citrate + D3 600mg",
-        store: "Watsons (Lai Chi Kok)",
-        lat: 22.33456,
-        lng: 114.14876,
-        address: "Shop 101-102, Lai Chi Kok Plaza, 1-3 Lai Wan Road"
-    },
-    "magnesium": {
-        supplement: "Magnesium Glycinate 400mg Caps",
-        store: "Fanda (Tsuen Wan)",
-        lat: 22.36891,
-        lng: 114.11234,
-        address: "Shop 201-203, Citywalk, 1 Yeung Uk Road, Tsuen Wan"
-    },
-    "potassium": {
-        supplement: "Potassium Citrate 99mg Tablets",
-        store: "Mannings (Kwun Tong)",
-        lat: 22.31234,
-        lng: 114.22456,
-        address: "Shop 101-102, APM Millennium City 5, Kwun Tong"
-    },
-    "zinc": {
-        supplement: "Zinc Picolinate 50mg Capsules",
-        store: "Watsons (Yuen Long)",
-        lat: 22.44345,
-        lng: 114.02890,
-        address: "Shop 1-3, G/F, 28 Castle Peak Road, Yuen Long"
-    },
-    "folate": {
-        supplement: "Folate 800mcg (Methylfolate)",
-        store: "Fanda (North Point)",
-        lat: 22.29123,
-        lng: 114.20456,
-        address: "Shop 201-203, City Garden, 233 Electric Road, North Point"
-    },
-    "omega 3": {
-        supplement: "Fish Oil 1000mg (EPA 180mg/DHA 120mg)",
-        store: "Mannings (Kennedy Town)",
-        lat: 22.27901,
-        lng: 114.12345,
-        address: "Shop G01-02, New Fortune House, 3-5 Catchick Street"
-    },
-    "omega-3": {
-        supplement: "Fish Oil 1000mg (EPA 180mg/DHA 120mg)",
-        store: "Mannings (Kennedy Town)",
-        lat: 22.27901,
-        lng: 114.12345,
-        address: "Shop G01-02, New Fortune House, 3-5 Catchick Street"
-    },
-    "fiber": {
-        supplement: "Psyllium Husk Powder 500mg",
-        store: "Watsons (Hung Hom)",
-        lat: 22.30423,
-        lng: 114.18234,
-        address: "Shop 1-2, G/F, 62-66 Hung Hom Road, Hung Hom"
-    },
-    "dietary fiber": {
-        supplement: "Psyllium Husk Powder 500mg",
-        store: "Watsons (Hung Hom)",
-        lat: 22.30423,
-        lng: 114.18234,
-        address: "Shop 1-2, G/F, 62-66 Hung Hom Road, Hung Hom"
-    },
-    "probiotics": {
-        supplement: "Probiotic 50 Billion CFU (15 Strains)",
-        store: "Fanda (Kowloon Bay)",
-        lat: 22.32056,
-        lng: 114.21056,
-        address: "Shop 301-305, Telford Plaza, Kowloon Bay"
-    },
-    "iodine": {
-        supplement: "Potassium Iodide 225mcg Tablets",
-        store: "Mannings (Tai Koo)",
-        lat: 22.28734,
-        lng: 114.21234,
-        address: "Shop 101-102, Cityplaza, 18 Taikoo Shing Road"
-    },
-    "selenium": {
-        supplement: "Selenomethionine 200mcg Capsules",
-        store: "Watsons (Aberdeen)",
-        lat: 22.24867,
-        lng: 114.15123,
-        address: "Shop 1-3, G/F, 26 Aberdeen Main Road"
-    },
-    "copper": {
-        supplement: "Copper Glycinate 2mg Capsules",
-        store: "Health Store (Sheung Wan)",
-        lat: 22.28654,
-        lng: 114.14892,
-        address: "Shop B, G/F, 128 Wing Lok Street, Sheung Wan"
-    },
-    "chromium": {
-        supplement: "Chromium Picolinate 200mcg Tablets",
-        store: "Mannings (Ma On Shan)",
-        lat: 22.42091,
-        lng: 114.22634,
-        address: "Shop 101-102, Ma On Shan Plaza, 608 Sai Sha Road"
+    // Build flattened nutrient list for detection
+    const nutrientDetectionList = [];
+    for (let [standard, aliases] of Object.entries(nutrientAliases)) {
+        for (let alias of aliases) {
+            nutrientDetectionList.push({ standard, alias });
+        }
     }
-};
 
-// Check if user is asking about supplements
-let isSupplementRequest = false;
-let detectedNutrient = null;
+    // Preset supplement data with Hong Kong stores (latitude: 22°08'N to 22°35'N, longitude: 113°49'E to 114°31'E)
+    const supplementData = {
+        "vitamin a": {
+            supplement: "💊 Retinol 10,000 IU Softgels",
+            store: "🏪 Mannings (Central Store)",
+            lat: 22.28123,
+            lng: 114.15678,
+            address: "Shop 101-102, Central Building, 1-3 Pedder Street, Central, Hong Kong"
+        },
+        "vitamin b": {
+            supplement: "💊 Vitamin B-Complex with B12",
+            store: "🏪 Watsons (Causeway Bay)",
+            lat: 22.28045,
+            lng: 114.18392,
+            address: "Shop G01-03, Windsor House, 311 Gloucester Road, Causeway Bay, Hong Kong"
+        },
+        "vitamin b1": {
+            supplement: "💊 Thiamine HCl 100mg Tablets",
+            store: "🏪 Fanda (Tsim Sha Tsui)",
+            lat: 22.29612,
+            lng: 114.17234,
+            address: "Shop 236-238, Ocean Terminal, Tsim Sha Tsui, Kowloon"
+        },
+        "vitamin b2": {
+            supplement: "💊 Riboflavin 100mg Capsules",
+            store: "🏪 Mannings (Mong Kok)",
+            lat: 22.31789,
+            lng: 114.16845,
+            address: "Shop A, G/F, 578 Nathan Road, Mong Kok, Kowloon"
+        },
+        "vitamin b3": {
+            supplement: "💊 Niacinamide 500mg Tablets",
+            store: "🏪 Watsons (Jordan)",
+            lat: 22.30456,
+            lng: 114.17023,
+            address: "Shop 1-3, G/F, 246 Nathan Road, Jordan, Kowloon"
+        },
+        "vitamin b5": {
+            supplement: "💊 Pantothenic Acid 250mg Caps",
+            store: "🏪 HK Supplement Store (Wan Chai)",
+            lat: 22.27543,
+            lng: 114.17289,
+            address: "Shop B, G/F, 128 Johnston Road, Wan Chai, Hong Kong"
+        },
+        "vitamin b6": {
+            supplement: "💊 Pyridoxine HCl 100mg Tablets",
+            store: "🏪 Mannings (Admiralty)",
+            lat: 22.27834,
+            lng: 114.16567,
+            address: "Shop 101, Admiralty Centre, 18 Harcourt Road, Admiralty"
+        },
+        "vitamin b7": {
+            supplement: "💊 Biotin 10,000mcg Capsules",
+            store: "🏪 Watsons (Quarry Bay)",
+            lat: 22.28734,
+            lng: 114.21234,
+            address: "Shop 1-5, G/F, 938 King's Road, Quarry Bay"
+        },
+        "vitamin b9": {
+            supplement: "💊 Folate 800mcg (Methylfolate)",
+            store: "🏪 Fanda (North Point)",
+            lat: 22.29123,
+            lng: 114.20456,
+            address: "Shop 201-203, City Garden, 233 Electric Road, North Point"
+        },
+        "vitamin b12": {
+            supplement: "💊 Methylcobalamin 1000mcg Lozenges",
+            store: "🏪 Mannings (Shatin)",
+            lat: 22.37845,
+            lng: 114.18765,
+            address: "Shop 101-102, New Town Plaza, Shatin, New Territories"
+        },
+        "vitamin c": {
+            supplement: "💊 Ester-C 1000mg with Bioflavonoids",
+            store: "🏪 Watsons (Tsim Sha Tsui)",
+            lat: 22.29612,
+            lng: 114.17234,
+            address: "Shop 301-305, Ocean Terminal, Tsim Sha Tsui"
+        },
+        "vitamin d": {
+            supplement: "💊 Vitamin D3 2000IU Softgels",
+            store: "🏪 Mannings (Causeway Bay)",
+            lat: 22.28045,
+            lng: 114.18392,
+            address: "Shop G06, Times Square, 1 Matheson Street, Causeway Bay"
+        },
+        "vitamin e": {
+            supplement: "💊 Mixed Tocopherols 400IU",
+            store: "🏪 Fanda (Central)",
+            lat: 22.28123,
+            lng: 114.15678,
+            address: "Shop 205, The Landmark, 15 Queen's Road Central"
+        },
+        "vitamin k": {
+            supplement: "💊 Vitamin K2 MK-7 100mcg Drops",
+            store: "🏪 Health Store (Happy Valley)",
+            lat: 22.26478,
+            lng: 114.18456,
+            address: "Shop 3, G/F, 68 Blue Pool Road, Happy Valley"
+        },
+        "iron": {
+            supplement: "💊 Iron Bisglycinate 25mg Capsules",
+            store: "🏪 Mannings (Wan Chai)",
+            lat: 22.27543,
+            lng: 114.17289,
+            address: "Shop A, G/F, 188 Hennessy Road, Wan Chai"
+        },
+        "calcium": {
+            supplement: "💊 Calcium Citrate + D3 600mg",
+            store: "🏪 Watsons (Lai Chi Kok)",
+            lat: 22.33456,
+            lng: 114.14876,
+            address: "Shop 101-102, Lai Chi Kok Plaza, 1-3 Lai Wan Road"
+        },
+        "magnesium": {
+            supplement: "💊 Magnesium Glycinate 400mg Caps",
+            store: "🏪 Fanda (Tsuen Wan)",
+            lat: 22.36891,
+            lng: 114.11234,
+            address: "Shop 201-203, Citywalk, 1 Yeung Uk Road, Tsuen Wan"
+        },
+        "potassium": {
+            supplement: "💊 Potassium Citrate 99mg Tablets",
+            store: "🏪 Mannings (Kwun Tong)",
+            lat: 22.31234,
+            lng: 114.22456,
+            address: "Shop 101-102, APM Millennium City 5, Kwun Tong"
+        },
+        "zinc": {
+            supplement: "💊 Zinc Picolinate 50mg Capsules",
+            store: "🏪 Watsons (Yuen Long)",
+            lat: 22.44345,
+            lng: 114.02890,
+            address: "Shop 1-3, G/F, 28 Castle Peak Road, Yuen Long"
+        },
+        "folate": {
+            supplement: "💊 Folate 800mcg (Methylfolate)",
+            store: "🏪 Fanda (North Point)",
+            lat: 22.29123,
+            lng: 114.20456,
+            address: "Shop 201-203, City Garden, 233 Electric Road, North Point"
+        },
+        "omega 3": {
+            supplement: "💊 Fish Oil 1000mg (EPA 180mg/DHA 120mg)",
+            store: "🏪 Mannings (Kennedy Town)",
+            lat: 22.27901,
+            lng: 114.12345,
+            address: "Shop G01-02, New Fortune House, 3-5 Catchick Street"
+        },
+        "omega-3": {
+            supplement: "💊 Fish Oil 1000mg (EPA 180mg/DHA 120mg)",
+            store: "🏪 Mannings (Kennedy Town)",
+            lat: 22.27901,
+            lng: 114.12345,
+            address: "Shop G01-02, New Fortune House, 3-5 Catchick Street"
+        },
+        "fiber": {
+            supplement: "💊 Psyllium Husk Powder 500mg",
+            store: "🏪 Watsons (Hung Hom)",
+            lat: 22.30423,
+            lng: 114.18234,
+            address: "Shop 1-2, G/F, 62-66 Hung Hom Road, Hung Hom"
+        },
+        "probiotics": {
+            supplement: "💊 Probiotic 50 Billion CFU (15 Strains)",
+            store: "🏪 Fanda (Kowloon Bay)",
+            lat: 22.32056,
+            lng: 114.21056,
+            address: "Shop 301-305, Telford Plaza, Kowloon Bay"
+        },
+        "iodine": {
+            supplement: "💊 Potassium Iodide 225mcg Tablets",
+            store: "🏪 Mannings (Tai Koo)",
+            lat: 22.28734,
+            lng: 114.21234,
+            address: "Shop 101-102, Cityplaza, 18 Taikoo Shing Road"
+        },
+        "selenium": {
+            supplement: "💊 Selenomethionine 200mcg Capsules",
+            store: "🏪 Watsons (Aberdeen)",
+            lat: 22.24867,
+            lng: 114.15123,
+            address: "Shop 1-3, G/F, 26 Aberdeen Main Road"
+        },
+        "copper": {
+            supplement: "💊 Copper Glycinate 2mg Capsules",
+            store: "🏪 Health Store (Sheung Wan)",
+            lat: 22.28654,
+            lng: 114.14892,
+            address: "Shop B, G/F, 128 Wing Lok Street, Sheung Wan"
+        },
+        "chromium": {
+            supplement: "💊 Chromium Picolinate 200mcg Tablets",
+            store: "🏪 Mannings (Ma On Shan)",
+            lat: 22.42091,
+            lng: 114.22634,
+            address: "Shop 101-102, Ma On Shan Plaza, 608 Sai Sha Road"
+        }
+    };
 
-// First check if it's a supplement-related query
-for (let keyword of supplementKeywords) {
-    if (inp.includes(keyword)) {
-        isSupplementRequest = true;
-        break;
-    }
-}
-
-// If supplement request detected, find which nutrient
-if (isSupplementRequest) {
-    for (let nutrient of nutrientList) {
-        if (inp.includes(nutrient)) {
-            detectedNutrient = nutrient;
+    // Check if user is asking about supplements
+    let isSupplementRequest = false;
+    for (let keyword of supplementKeywords) {
+        if (inp.includes(keyword)) {
+            isSupplementRequest = true;
             break;
         }
     }
-    
-    // Also check for partial matches like "b12" without "vitamin"
-    if (!detectedNutrient) {
-        if (inp.includes("b12") || inp.includes("b-12")) detectedNutrient = "vitamin b12";
-        else if (inp.includes("b9") || inp.includes("b-9") || inp.includes("folate")) detectedNutrient = "vitamin b9";
-        else if (inp.includes("b6") || inp.includes("b-6")) detectedNutrient = "vitamin b6";
-        else if (inp.includes("b3") || inp.includes("b-3")) detectedNutrient = "vitamin b3";
-        else if (inp.includes("b2") || inp.includes("b-2")) detectedNutrient = "vitamin b2";
-        else if (inp.includes("b1") || inp.includes("b-1")) detectedNutrient = "vitamin b1";
-        else if (inp.includes("c") && !inp.includes("vitamin")) detectedNutrient = "vitamin c";
-        else if (inp.includes("d3")) detectedNutrient = "vitamin d";
-        else if (inp.includes("k2")) detectedNutrient = "vitamin k";
-    }
-    
-    // If a nutrient was detected, output supplement info with map
-    if (detectedNutrient) {
-        const data = supplementData[detectedNutrient];
-        if (data) {
-            let res1 = `✨ For ${detectedNutrient.toUpperCase()} deficiency, I recommend: ${data.supplement}`;
-            let res2 = `📍 Available at: ${data.store}`;
-            let res3 = `📋 Opening hours: Mon-Sun 9:00 AM - 9:00 PM`;
-            let res4 = `💡 The store location is shown below with a map. Click "Open in Google Maps" for directions.`;
-            let res5 = `⚠️ Note: Always consult a healthcare professional before starting any supplement regimen.`;
-            
-            dispatch_messages([res1, res2, res3, res4, res5]);
-            
-            // Show the store panel with map
-            if (typeof showStorePanel === 'function') {
-                showStorePanel(data.store, data.supplement, data.lat, data.lng, data.address);
+
+    // If supplement request detected, find which nutrient using aliases
+    if (isSupplementRequest) {
+        let detectedNutrient = null;
+        
+        // Check through all aliases
+        for (let item of nutrientDetectionList) {
+            if (inp.includes(item.alias)) {
+                detectedNutrient = item.standard;
+                break;
             }
-            check = 1;
-        } else {
-            // Fallback for detected nutrient without specific data
-            let res1 = `💊 For ${detectedNutrient.toUpperCase()}, consider a high-quality supplement from reputable brands.`;
-            let res2 = `📍 Available at: Mannings or Watsons stores across Hong Kong`;
-            let res3 = `📍 Recommended store location: Mannings (Central) - 22.28123°, 114.15678°`;
-            
-            dispatch_messages([res1, res2, res3]);
-            
-            // Show default store
-            if (typeof showStorePanel === 'function') {
-                showStorePanel("Mannings (Central)", `${detectedNutrient.toUpperCase()} Supplement`, 22.28123, 114.15678, "Shop 101-102, Central Building, 1-3 Pedder Street, Central, Hong Kong");
+        }
+        
+        // Also check for direct matches in supplementData
+        if (!detectedNutrient) {
+            for (let nutrient in supplementData) {
+                if (inp.includes(nutrient)) {
+                    detectedNutrient = nutrient;
+                    break;
+                }
             }
+        }
+        
+        // If a nutrient was detected, output supplement info with map
+        if (detectedNutrient) {
+            const data = supplementData[detectedNutrient];
+            if (data) {
+                let res1 = `✨ For ${detectedNutrient.toUpperCase()} deficiency, I recommend: ${data.supplement}`;
+                let res2 = `📍 Available at: ${data.store}`;
+                let res3 = `🕒 Opening hours: Mon-Sun 9:00 AM - 9:00 PM`;
+                let res4 = `🗺️ The store location is shown below with a map. Click "Open in Google Maps" for directions.`;
+                let res5 = `⚠️ Note: Always consult a healthcare professional before starting any supplement regimen.`;
+                
+                dispatch_messages([res1, res2, res3, res4, res5]);
+                
+                // Show the store panel with map
+                if (typeof showStorePanelCallback === 'function') {
+                    showStorePanelCallback(data.store, data.supplement, data.lat, data.lng, data.address);
+                } else if (typeof showStorePanel === 'function') {
+                    showStorePanel(data.store, data.supplement, data.lat, data.lng, data.address);
+                }
+                check = 1;
+            } else {
+                // Fallback for detected nutrient without specific data
+                let res1 = `💊 For ${detectedNutrient.toUpperCase()}, consider a high-quality supplement from reputable brands.`;
+                let res2 = `📍 Available at: Mannings or Watsons stores across Hong Kong`;
+                let res3 = `📍 Recommended store location: Mannings (Central) - 22.28123°, 114.15678°`;
+                
+                dispatch_messages([res1, res2, res3]);
+                
+                // Show default store
+                if (typeof showStorePanelCallback === 'function') {
+                    showStorePanelCallback("Mannings (Central)", `${detectedNutrient.toUpperCase()} Supplement`, 22.28123, 114.15678, "Shop 101-102, Central Building, 1-3 Pedder Street, Central, Hong Kong");
+                } else if (typeof showStorePanel === 'function') {
+                    showStorePanel("Mannings (Central)", `${detectedNutrient.toUpperCase()} Supplement`, 22.28123, 114.15678, "Shop 101-102, Central Building, 1-3 Pedder Street, Central, Hong Kong");
+                }
+                check = 1;
+            }
+        } else if (isSupplementRequest) {
+            // User asked about supplements but didn't specify which nutrient
+            let res1 = "💊 Which nutrient are you looking for? I can recommend supplements and stores for:";
+            let res2 = "🔹 Vitamin B12, Vitamin D, Iron, Magnesium, Zinc, Calcium";
+            let res3 = "🔹 Omega-3, Probiotics, Vitamin C, Folate, and more!";
+            let res4 = "💡 Try asking: 'How can I get more Vitamin B12?' or 'Where to buy Magnesium supplements?'";
+            
+            dispatch_messages([res1, res2, res3, res4]);
             check = 1;
         }
-    } else if (isSupplementRequest) {
-        // User asked about supplements but didn't specify which nutrient
-        let res1 = "💊 Which nutrient are you looking for? I can recommend supplements and stores for:";
-        let res2 = "🔹 Vitamin B12, Vitamin D, Iron, Magnesium, Zinc, Calcium";
-        let res3 = "🔹 Omega-3, Probiotics, Vitamin C, Folate, and more!";
-        let res4 = "💡 Try asking: 'How can I get more Vitamin B12?' or 'Where to buy Magnesium supplements?'";
-        
-        dispatch_messages([res1, res2, res3, res4]);
-        check = 1;
     }
-}
-
     
     // --- FALLBACK LOGIC ---
     if (check === 0) {
         dispatch_messages([
-            "I don't understand your query!",
-            "Try inputting something like:",
-            "• 'I have a headache'",
-            "• 'I have constipation'", 
-            "• 'I have diarrhea'",
-            "• 'I have extreme fatigue'",
-            "• 'I want a 500 kcal recipe'",
-            "I can analyze many symptoms including fatigue, pain, headache, cramps, stomach issues, constipation, diarrhea, dizziness, anxiety, insomnia, and more!"
+            "🤔 I don't understand your query!",
+            "💡 Try inputting something like:",
+            "• 🩺 'I have a headache'",
+            "• 🚽 'I have constipation'", 
+            "• 💩 'I have diarrhea'",
+            "• 😴 'I have extreme fatigue'",
+            "• 🔥 'I want a 500 kcal recipe'",
+            "• 💊 'Where can I buy magnesium?'",
+            "✨ I can analyze many symptoms including fatigue, pain, headache, cramps, stomach issues, constipation, diarrhea, dizziness, anxiety, insomnia, and more!"
         ]);
     }
 }
